@@ -1,31 +1,32 @@
 package controller;
 
 import java.security.Principal;
-import java.util.Locale;
-import java.util.logging.Logger;
 
-import service.PgenRequestService;
+import javax.validation.Valid;
 
-/**
- * 
- * The <b>PgenRequestController</b> extends PgenController to handles all actions from screen and returns back the response<br> 
- * 
- * Actions like:<br> 
- *  - Create a PGEN Request<br> 
- *  - Validate PGEN Request<br> 
- *  -  Reject, abandonate, Correct, Execute ... PGEN Requests<br> 
- */
-@RequestMapping("/pgenrequests")
+import model.DataProc;
+
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Controller;
+import org.springframework.ui.Model;
+import org.springframework.validation.BindingResult;
+import org.springframework.web.bind.annotation.ModelAttribute;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestMethod;
+import org.springframework.web.bind.support.SessionStatus;
+
+import service.MyRequestService;
+import domain.Myrequest;
+
+
+@RequestMapping("/myRequests")
 @Controller
-@SessionAttributes({TwisterConstants.DATA_PROC_DTO, TwisterConstants.PGEN_REQUEST_DTO})
-public class PgenRequestController extends PgenController{
+public class RequestController {
 
-	private Logger log = LoggerFactory.getLogger(PgenRequestController.class);
-	private Logger logSecurity = LoggerFactory.getLogger("TwisterSec");
 	private String returnUpdateView = "pgenrequests/update";
 	
 	public static String bonitaStatus = "success";
-	@Autowired private PgenRequestService pgenRequestService;
+	@Autowired private MyRequestService myRequestService;
 	/*
 	 * Binders & Validation
 	 */
@@ -33,59 +34,45 @@ public class PgenRequestController extends PgenController{
 	/** Initialize the Binders and set the Validator corresponding to pgenRequestDto<br>
 	 * @param binder - WebDataBinder <br>
 	 */
-	@InitBinder(TwisterConstants.PGEN_REQUEST_DTO)
+/*	@InitBinder(TwisterConstants.PGEN_REQUEST_DTO)
 	public void initBinder(WebDataBinder binder) {
 		log.debug("Init Binder: "+binder.getObjectName());
 		binder.registerCustomEditor(String.class, new StringTrimmerEditor(true));
 	}
 
-	/*
+	
 	 * Populate the new model in the view and initiate SessionAttributes conversation
-	 */
-	/** <b>getNewDataProcDto</b>
-	 * @return DataProc
-	 */
-	@ModelAttribute(TwisterConstants.DATA_PROC_DTO)
-	public DataProc getNewDataProcDto(){
-		return new DataProc();
-	}
-
-	/** <b>getNewPgenRequestDto</b>
-	 * @return PgenRequest
-	 */
-	@ModelAttribute(TwisterConstants.PGEN_REQUEST_DTO)
-	public PgenRequest getNewPgenRequestDto(){
-		return new PgenRequest();
-	}
+	 
+	
 
 
-	/*
+	
 	 * Reference Data
-	 */
+	 
 
-	/** Populate Reference Data <br>
+	*//** Populate Reference Data <br>
 	 * @param uiModel - Model, contains attributes need it to display the data correctly in the jsp<br>
 	 * @param operator - Operator to get the data in the corresponding language selected<br>
-	 */
+	 *//*
 	public void populateReferenceData(Model uiModel, Operator operator){
 		
 		uiModel.addAttribute("listRequestTypes", processRefService.findAllPgenProcesses(operator));
 		uiModel.addAttribute("listPriorities", listValueService.findAllListValueByListName(PgenConstants.PGEN_PRIORITY_LIST));
 	}
 
-	/*****************
+	*//*****************
 	 * FORM CREATION *
-	 *****************/
-	/*
+	 *****************//*
+	
 	 * CREATE
-	 */
-	/**
+	 
+	*//**
 	 * Initialization of the form, first creation when /create is called
 	 * 
 	 * @param loggedUser - User connected to TWISTER
 	 * @param uiModel - Model
 	 * @return the view "pgenrequests/create" 
-	 */
+	 *//*
 	@PreAuthorize("hasPermission(#loggedUser,'PGEN_CREATE')")
 	@RequestMapping(value = "create", method = RequestMethod.GET, produces = TwisterConstants.PRODUCES_TEXT_HTML)
 	public String createForm(Principal loggedUser,Model uiModel){
@@ -108,27 +95,27 @@ public class PgenRequestController extends PgenController{
 		return "pgenrequests/create";
 	}
 
-	/*
+	
 	 * UPDATE
-	 */
+	 
 
 
-	/**
+	*//**
 	 * Get the <b>Update View</b> of the Request Created called from the  Todo requests list
 	 * 
 	 * @param dataProcId - (Path Variable parameter) the Id of the dataProc in request
 	 * @param uiModel - Model
 	 * @param loggedUser - User connected to TWISTER
 	 * @return the update view "pgenrequests/update"
-	 */
+	 *//*
 	@RequestMapping(value = "update/{dataProcId}", method = RequestMethod.GET, produces = TwisterConstants.PRODUCES_TEXT_HTML)
 	public String updateForm(@PathVariable("dataProcId") Long dataProcId, Principal loggedUser, Model uiModel){
 		logSecurity.debug(loggedUser.getName()+" starts Update Pgen Request Form - request ID ["+dataProcId+"]");
 		log.info("Start - Retrieving data for modification form");
 		DataProc updateProc = dataProcService.findDataProc(dataProcId);
-		/*
+		
 		 * Deserialize procdata to pgenRequestDto
-		 */
+		 
 		PgenRequest updateRequest = deserializeProcData(updateProc.getProcData(), PgenRequest.class);
 		Operator creator = operatorService.findOperatorByLogin(updateProc.getOperCreator().getLogin());
 		populateEditForm(uiModel,updateProc,updateRequest, creator);
@@ -145,26 +132,26 @@ public class PgenRequestController extends PgenController{
 		return returnUpdateView;
 	}
 
-	/*
+	
 	 * VALIDATE
-	 */
+	 
 
-	/**
+	*//**
 	 * Get the <b>Validate View</b> of the Request Created called from the  myRequests list
 	 * 
 	 * @param loggedUser - User connected to TWISTER
 	 * @param dataProcId - (Path Variable parameter) the Id of the dataProc in request
 	 * @param uiModel - Model
 	 * @return the validate view "pgenrequests/validate"
-	 */
+	 *//*
 	@RequestMapping(value = "validate/{dataProcId}", method = RequestMethod.GET, produces = TwisterConstants.PRODUCES_TEXT_HTML)
 	public String validateForm(Principal loggedUser, @PathVariable("dataProcId") Long dataProcId, Model uiModel){
 		logSecurity.debug(loggedUser.getName()+" starts Validate Pgen Request Form - request ID ["+dataProcId+"]");
 		log.info("Start - Retrieving data for validation form");
 		DataProc validateProc = dataProcService.findDataProc(dataProcId);
-		/*
+		
 		 * Deserialize procdata to themisAccountDto
-		 */
+		 
 		PgenRequest validateRequest = deserializeProcData(validateProc.getProcData(), PgenRequest.class);
 		Operator validator = operatorService.findOperatorByLogin(validateProc.getOperCreator().getLogin());
 		populateEditForm(uiModel,validateProc,validateRequest, validator);
@@ -178,11 +165,27 @@ public class PgenRequestController extends PgenController{
 			uiModel.addAttribute("bonitafailure", "");
 		}
 		return "pgenrequests/validate";
-	}
+	}*/
 
 	/*
 	 * CREATE
 	 */   
+	
+	/** <b>getNewDataProcDto</b>
+	 * @return DataProc
+	 */
+	@ModelAttribute("dataProcdto")
+	public DataProc getNewDataProcDto(){
+		return new DataProc();
+	}
+
+	/** <b>getNewPgenRequestDto</b>
+	 * @return PgenRequest
+	 */
+	@ModelAttribute("requestDto")
+	public Myrequest getNewPgenRequestDto(){
+		return new Myrequest();
+	}
 
 	/**
 	 * Once the form is submitted with "Submit" button
@@ -197,13 +200,13 @@ public class PgenRequestController extends PgenController{
 	 * @return myRequest PGEN search page if no errors during the validation
 	 * @return The request update view "pgenrequests/update" with the errors to be corrected
 	 */
-	@PreAuthorize("hasPermission(#loggedUser,'PGEN__CREATE')")
-	@RequestMapping(value = TwisterConstants.PROCESS_FORM, params="create", method = RequestMethod.POST)
-	public String create(Principal loggedUser, @ModelAttribute(TwisterConstants.DATA_PROC_DTO) final DataProc createProc, 
-			@ModelAttribute(TwisterConstants.PGEN_REQUEST_DTO) @Valid final PgenRequest pgenRequest, BindingResult bindingResult,
+	//@PreAuthorize("hasPermission(#loggedUser,'PGEN__CREATE')")
+	@RequestMapping(value = "processForm", params="create", method = RequestMethod.POST)
+	public String create(Principal loggedUser, @ModelAttribute("dataProcdto") final DataProc createProc, 
+			@ModelAttribute("requestDto") @Valid final Myrequest myRequest, BindingResult bindingResult,
 			Model uiModel, SessionStatus status){
-		log.info(PgenConstants.LOG_START_SEND_REQUEST);
-		Operator activeUser = operatorService.findOperatorByLogin(loggedUser.getName());
+		//log.info("start request");
+		/*Operator activeUser = operatorService.findOperatorByLogin(loggedUser.getName());
 		if (bindingResult.hasErrors()) {
 			log.debug("errors: " + bindingResult.getAllErrors().toString());
 			populateEditForm(uiModel,createProc,pgenRequest, activeUser);
@@ -215,24 +218,15 @@ public class PgenRequestController extends PgenController{
 			}
 
 			return returnUpdateView;
-		}
-		boolean isCreate = ( createProc.getIdTaskInstance()==null) ? true:false ;
+		}*/
+		//boolean isCreate = ( createProc.getIdTaskInstance()==null) ? true:false ;
 		
-		pgenRequestService.create(activeUser, createProc, pgenRequest, status);
-		log.info(PgenConstants.LOG_END_SEND_REQUEST);
+		myRequestService.create(createProc, myRequest, status);
+		//log.info("sending request");
 		uiModel.asMap().clear();
 		status.setComplete();
-		if(bonitaStatus.equals("failure")){
-			if(isCreate==false){
-				return TwisterConstants.REDIRECT_VIEW+INavigationConstants.PGEN_REQUESTS+INavigationConstants.PAGE_ACTION_UPDATE+"/"+createProc.getId();
-			}
-			else{
-				return TwisterConstants.REDIRECT_VIEW+INavigationConstants.PGEN_REQUESTS+INavigationConstants.PAGE_ACTION_CREATE;
-			}
-		}
-		else{
-			return TwisterConstants.REDIRECT_VIEW+INavigationConstants.MAIN_MY_REQUEST_PGEN_LIST_PAGE;
-		}
+		
+		return "redirect:"+"myrequests/update"+"/"+createProc.getDataId();
 	}
 
 
@@ -251,7 +245,7 @@ public class PgenRequestController extends PgenController{
 	 * @param status - SessionStatus
 	 * @return myRequest PGEN search page
 	 */
-	@PreAuthorize("hasPermission(#loggedUser,'PGEN__ASK_EXECUTE_CCSIT')")
+	/*@PreAuthorize("hasPermission(#loggedUser,'PGEN__ASK_EXECUTE_CCSIT')")
 	@RequestMapping(value = TwisterConstants.PROCESS_FORM, params="correct", method = RequestMethod.POST)
 	public String correct(Principal loggedUser, @ModelAttribute(TwisterConstants.DATA_PROC_DTO) final DataProc correctProc, 
 			@ModelAttribute(TwisterConstants.PGEN_REQUEST_DTO) final PgenRequest pgenRequest, BindingResult bindingResult,
@@ -270,10 +264,10 @@ public class PgenRequestController extends PgenController{
 		}
 	}
 
-	/*
+	
 	 * EXECUTE
-	 */   
-	/**
+	    
+	*//**
 	 * Once the form is submitted with "Accept Request" button
 	 * 
 	 * @param executeProc - DataProcDto to be executed
@@ -283,7 +277,7 @@ public class PgenRequestController extends PgenController{
 	 * @param uiModel - Model
 	 * @param status - SessionStatus
 	 * @return myRequest PGEN search page
-	 */
+	 *//*
 	@PreAuthorize("hasPermission(#loggedUser,'PGEN__EXECUTE')")
 	@RequestMapping(value = TwisterConstants.PROCESS_FORM, params="execute", method = RequestMethod.POST)
 	public String execute(@ModelAttribute(TwisterConstants.DATA_PROC_DTO) final DataProc executeProc, 
@@ -308,10 +302,10 @@ public class PgenRequestController extends PgenController{
 	}
 
 
-	/*
+	
 	 * PGEN Completion
-	 */
-	/**
+	 
+	*//**
 	 * Once the form is submitted with "Complete Request" button 
 	 * 
 	 * @param executeProc - DataProcDto to be completed
@@ -321,7 +315,7 @@ public class PgenRequestController extends PgenController{
 	 * @param uiModel - Model
 	 * @param status - SessionStatus
 	 * @return myRequest PGEN search page
-	 */
+	 *//*
 	@PreAuthorize("hasPermission(#loggedUser,'PGEN__COMPLETE')")
 	@RequestMapping(value = TwisterConstants.PROCESS_FORM, params="complete", method = RequestMethod.POST)
 	public String complete(@ModelAttribute(TwisterConstants.DATA_PROC_DTO) final DataProc executeProc, 
@@ -347,10 +341,10 @@ public class PgenRequestController extends PgenController{
 		}
 	}
 
-	/*
+	
 	 * PGEN Ask More Info
-	 */
-	/**
+	 
+	*//**
 	 * Once the form is submitted with "Ask for more information" button 
 	 * 
 	 * @param moreInfoProc - dataProc to be modified and complete the Information
@@ -360,7 +354,7 @@ public class PgenRequestController extends PgenController{
 	 * @param uiModel - Model
 	 * @param status - SessionStatus
 	 * @return myRequest PGEN search page
-	 */
+	 *//*
 	@PreAuthorize("hasPermission(#loggedUser,'PGEN__ASK_MODIFICATION')")
 	@RequestMapping(value = TwisterConstants.PROCESS_FORM, params="ask_info", method = RequestMethod.POST)
 	public String moreInfo(@ModelAttribute(TwisterConstants.DATA_PROC_DTO) final DataProc moreInfoProc, 
@@ -388,10 +382,10 @@ public class PgenRequestController extends PgenController{
 	}
 
 
-	/*
+	
 	 * CLOSE
-	 */   
-	/**
+	    
+	*//**
 	 * Once the form is submitted with "Close Request" button 
 	 * 
 	 * @param closeProc - DataProc to be closed
@@ -401,7 +395,7 @@ public class PgenRequestController extends PgenController{
 	 * @param uiModel - Model
 	 * @param status - SessionStatus
 	 * @return myRequest PGEN search page
-	 */
+	 *//*
 	@PreAuthorize("hasPermission(#loggedUser,'PGEN__CLOSE')")
 	@RequestMapping(value = TwisterConstants.PROCESS_FORM, params="close", method = RequestMethod.POST)
 	public String close(@ModelAttribute(TwisterConstants.DATA_PROC_DTO) final DataProc closeProc, 
@@ -427,10 +421,10 @@ public class PgenRequestController extends PgenController{
 		}
 	}
 
-	/*
+	
 	 * REJECT
-	 */   
-	/**
+	    
+	*//**
 	 * Once the form is submitted with "Reject" button 
 	 * 
 	 * @param rejectProc - DataProc to be rejected
@@ -440,7 +434,7 @@ public class PgenRequestController extends PgenController{
 	 * @param uiModel - Model
 	 * @param status - SessionStatus
 	 * @return myRequest PGEN search page
-	 */
+	 *//*
 	@PreAuthorize("hasPermission(#loggedUser,'PGEN__REJECT')")
 	@RequestMapping(value = TwisterConstants.PROCESS_FORM, params="reject", method = RequestMethod.POST)
 	public String reject(@ModelAttribute(TwisterConstants.DATA_PROC_DTO) final DataProc rejectProc, 
@@ -466,10 +460,10 @@ public class PgenRequestController extends PgenController{
 		}
 	}
 
-	/*
+	
 	 * ABANDON
-	 */   
-	/**
+	    
+	*//**
 	 * Once the form is submitted with "Abandon" button 
 	 * 
 	 * @param abandonProc  - DataProc to be abandonated
@@ -479,7 +473,7 @@ public class PgenRequestController extends PgenController{
 	 * @param uiModel - Model
 	 * @param status - SessionStatus
 	 * @return myRequest PGEN search page
-	 */
+	 *//*
 	@PreAuthorize("hasPermission(#loggedUser,'PGEN__ABANDON')")
 	@RequestMapping(value = TwisterConstants.PROCESS_FORM, params="abandon", method = RequestMethod.POST)
 	public String abandon(@ModelAttribute(TwisterConstants.DATA_PROC_DTO) final DataProc abandonProc, 
@@ -505,10 +499,10 @@ public class PgenRequestController extends PgenController{
 		}
 	}
 
-	/*
+	
 	 * CONTROL
-	 */   
-	/**
+	    
+	*//**
 	 * Once the form is submitted with "Processing done" button 
 	 * 
 	 * @param controlProc - DataProc to be controled
@@ -518,7 +512,7 @@ public class PgenRequestController extends PgenController{
 	 * @param uiModel - Model
 	 * @param status - SessionStatus
 	 * @return myRequest PGEN search page
-	 */ 
+	 *//* 
 	@PreAuthorize("hasPermission(#loggedUser,'PGEN__CONTROL')")
 	@RequestMapping(value = TwisterConstants.PROCESS_FORM, params="control", method = RequestMethod.POST)
 	public String control(@ModelAttribute(TwisterConstants.DATA_PROC_DTO) final DataProc controlProc, 
@@ -546,10 +540,10 @@ public class PgenRequestController extends PgenController{
 		
 	}
 
-	/*
+	
 	 * VALIDATE
-	 */   
-	/**
+	    
+	*//**
 	 * Once the form is submitted with "Validate" button 
 	 * 
 	 * @param loggedUser - User connected to TWISTER
@@ -560,7 +554,7 @@ public class PgenRequestController extends PgenController{
 	 * @param status - SessionStatus
 	 * @return The update request view with the error to be corrected before resubmitting the form to validate
 	 * @return myRequest PGEN search page if no error 
-	 */
+	 *//*
 	@PreAuthorize("hasPermission(#loggedUser,'PGEN__VALIDATE')")
 	@RequestMapping(value = TwisterConstants.PROCESS_FORM, params="validate", method = RequestMethod.POST)
 	public String validate(Principal loggedUser, @ModelAttribute(TwisterConstants.DATA_PROC_DTO) final DataProc validateProc, 
@@ -601,15 +595,15 @@ public class PgenRequestController extends PgenController{
 	}
 
 
-	/*
+	
 	 * CANCEL
-	 */
-	/**
+	 
+	*//**
 	 * Once the form is submitted with "Cancel" button 
 	 * 
 	 * @param status - SessionStatus
 	 * @return Todo main search page
-	 */
+	 *//*
 	@RequestMapping(value = TwisterConstants.PROCESS_FORM, params="cancel", method = RequestMethod.POST)
 	public String cancel(SessionStatus status) {
 		log.info("Cancel Action -> Redirect to main page");
@@ -623,11 +617,11 @@ public class PgenRequestController extends PgenController{
 		super.populateEditForm(uiModel, dataProc, pgenRequest);
 	}
 
-	/*
+	
 	 * Manual ITSM
-	 */   
+	    
 
-	/**
+	*//**
 	 * Once the form is submitted with "Send Manual ITSM" button
 	 * 
 	 * @param itsmProc - DataProc to which the itsm should be created
@@ -639,7 +633,7 @@ public class PgenRequestController extends PgenController{
 	 * @param selectedLocale - Locale, the language selected
 	 * @return in case of Itsm not created return the "pgenrequests/update" view
 	 * @return myRequests DataProcs search page
-	 */
+	 *//*
 	@PreAuthorize("hasPermission(#loggedUser,'PGEN__RETRY_ITSM_MANUAL')")
 	@RequestMapping(value = "retryItsm", method = RequestMethod.POST, produces = TwisterConstants.PRODUCES_TEXT_HTML)
 	public String manual(@ModelAttribute(TwisterConstants.DATA_PROC_DTO) @Valid final DataProc itsmProc, BindingResult bindingResult,
@@ -681,11 +675,11 @@ public class PgenRequestController extends PgenController{
 		}
 	}
 
-	/*
+	
 	 * Create AUTO ITSM
-	 */
+	 
 
-	/**
+	*//**
 	 * Function Called once the "Auto" button is submitted
 	 * Automatically Create the ITSM number for this DataProc
 	 * 
@@ -696,7 +690,7 @@ public class PgenRequestController extends PgenController{
 	 * @param uiModel - Model
 	 * @param status - SessionStatus
 	 * @return Todo dataProcs search page
-	 */
+	 *//*
 	@RequestMapping(value = "retryItsm/{dataProcId}", method = RequestMethod.GET, produces = TwisterConstants.PRODUCES_TEXT_HTML)
 	public String auto(@PathVariable("dataProcId") Long dataId, @ModelAttribute(TwisterConstants.DATA_PROC_DTO) final DataProc itsmProc, @ModelAttribute(TwisterConstants.PGEN_REQUEST_DTO) final PgenRequest pgenRequest,
 			Principal loggedUser,
@@ -717,11 +711,11 @@ public class PgenRequestController extends PgenController{
 		}
 	}
 
-	/*
+	
 	 * I18N Reload
-	 */
+	 
 
-	/**
+	*//**
 	 * When Reloading the page
 	 * 
 	 * @param dataProc - DataProc
@@ -731,7 +725,7 @@ public class PgenRequestController extends PgenController{
 	 * @param uiModel - Model
 	 * @param status - SessionStatus
 	 * @return the request update view "pgenrequests/update"
-	 */
+	 *//*
 	@RequestMapping(value = TwisterConstants.PROCESS_FORM, method = RequestMethod.GET)
 	public String reload(@ModelAttribute(TwisterConstants.DATA_PROC_DTO) final DataProc dataProc, 
 			@ModelAttribute(TwisterConstants.PGEN_REQUEST_DTO) @Valid final PgenRequest pgenRequest, BindingResult bindingResult,
@@ -752,5 +746,5 @@ public class PgenRequestController extends PgenController{
 			uiModel.addAttribute(TwisterConstants.ERROR,2);
 		}
 		return returnUpdateView;
-	}
+	}*/
 }

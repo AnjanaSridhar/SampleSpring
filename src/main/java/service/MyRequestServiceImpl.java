@@ -7,6 +7,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+import model.DataProc;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
@@ -15,32 +17,19 @@ import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.support.SessionStatus;
 
-import com.total.twister.bpm.BPMService;
-import com.total.twister.common.domain.DataProc;
-import com.total.twister.common.domain.DataProcComment;
-import com.total.twister.common.domain.DataProcFile;
-import com.total.twister.common.domain.DataProcHistory;
-import com.total.twister.common.domain.LocalizedMessage;
-import com.total.twister.common.domain.Operator;
-import com.total.twister.common.domain.ProcessTaskVersion;
-import com.total.twister.common.reference.TaskRefConstants;
-import com.total.twister.common.reference.TwisterConstants;
-import com.total.twister.common.reference.WorkflowConstants;
-import com.total.twister.infra.exception.TwisterGenericRuntimeException;
-import com.total.twister.pgen.domain.PgenRequest;
-import com.total.twister.pgen.reference.PgenConstants;
-import com.total.twister.web.pgen.PgenRequestController;
-import com.total.twister.web.reference.ITwisterStatus;
-import com.total.twister.web.utils.GenericUtils;
+import common.DataProcService;
 
+import domain.Myrequest;
 
 @Service@Transactional(isolation = Isolation.DEFAULT, propagation=Propagation.REQUIRED)
-public class PgenRequestServiceImpl extends PgenServiceImpl implements PgenRequestService{
+public class MyRequestServiceImpl implements MyRequestService{
 
-	private Logger log = LoggerFactory.getLogger(PgenRequestServiceImpl.class);
+	private DataProcService dataProcService;
+	
+	/*private Logger log = LoggerFactory.getLogger(PgenRequestServiceImpl.class);
 
 	private Logger logSecurity = LoggerFactory.getLogger("TwisterSec");
-
+*/
 
 
 	/**
@@ -49,7 +38,7 @@ public class PgenRequestServiceImpl extends PgenServiceImpl implements PgenReque
 	 * @param dataProc - DataProc
 	 * @param pgenRequest - PgenRequest
 	 */
-	private void definePgenStatus(DataProc dataProc, PgenRequest pgenRequest) {
+	/*private void definePgenStatus(DataProc dataProc, PgenRequest pgenRequest) {
 
 		if(pgenRequest.getRequestType().equals(PgenConstants.PGEN_CREATE_BANK_COUNTERPARTY)){
 			dataProc.setStatus(localizedMessageService.findLocalizedMessage(PgenConstants.PGEN_PREFIX+TwisterConstants.STATUS_TO_COMPLETE));
@@ -62,58 +51,31 @@ public class PgenRequestServiceImpl extends PgenServiceImpl implements PgenReque
 		}
 
 	}
+*/
 
 
-
-	public void create(Operator activeUser, final DataProc createProc, final PgenRequest pgenRequest, SessionStatus status){
-		LocalizedMessage tempStatus;
-		String code = "";
-		int version = 0;
-		Operator last_oper = null;
-		Set<DataProcComment> commentsSet = new HashSet<DataProcComment>();
-		Set<DataProcFile> filesSet = new HashSet<DataProcFile>();
-		ProcessTaskVersion task_code = null;
-		
+	public void create(final DataProc createProc, final Myrequest myRequest, SessionStatus status){
 		DataProc dataProc = null;
-		BPMService bonitaService = new BPMService();
-
-		if(createProc.getId()!=null){
-			 tempStatus = createProc.getStatus();
-			 code = tempStatus.getCode();
-			 version = createProc.getVersion();
-			 last_oper = createProc.getOperLast();
-			 commentsSet = createProc.getComments();
-			 filesSet = createProc.getFiles();
-			 task_code = createProc.getProcessTaskVersion();
-			dataProc = dataProcService.findDataProc(createProc.getId());
+		
+		if(createProc.getDataId()!=null){
+			 dataProc = dataProcService.findDataProc(createProc.getDataId());
 		}
 		else{
 			dataProc = createProc;
 		}
-		Boolean internFlag = GenericUtils.containsProfileByCode(activeUser.getProfiles(),PgenConstants.PGEN_INTERN_PROFILE);
+		
+		//Boolean internFlag = GenericUtils.containsProfileByCode(activeUser.getProfiles(),PgenConstants.PGEN_INTERN_PROFILE);
 
-		createIt(internFlag,dataProc, bonitaService, activeUser, createProc, pgenRequest, status);
+		//createIt(internFlag,dataProc, bonitaService, activeUser, createProc, pgenRequest, status);
 
-		processForm(bonitaService, dataProc, pgenRequest, PgenConstants.PGEN_ACTION_CREATE,WorkflowConstants.ACTION_TYPE_TO_VALIDATE,WorkflowConstants.PROCESS_PGEN, internFlag);
-		boolean isCreate = ( createProc.getIdTaskInstance()==null) ? true:false ;
-		if(PgenRequestController.bonitaStatus.equals("failure")){
-			if(task_code!=null){
-				dataProc.setProcessTaskVersion(task_code);
-			}
-			if(isCreate==false){
-				rollbackDataProcChanges(dataProc, commentsSet, filesSet, version, last_oper, code, pgenRequest);
-			}
-			
-			
-		}
-		else{
-			dataProcService.refreshDataProc(dataProc);
-		}
+		//processForm(bonitaService, dataProc, pgenRequest, PgenConstants.PGEN_ACTION_CREATE,WorkflowConstants.ACTION_TYPE_TO_VALIDATE,WorkflowConstants.PROCESS_PGEN, internFlag);
+		//dataProcService.refreshDataProc(dataProc);
+		
 
 	}
 
 
-	public void correct(Principal loggedUser, final DataProc correctProc, final PgenRequest pgenRequest){
+	/*public void correct(Principal loggedUser, final DataProc correctProc, final PgenRequest pgenRequest){
 		
 		LocalizedMessage tempStatus = correctProc.getStatus();
 		String code = tempStatus.getCode();
@@ -488,10 +450,10 @@ public class PgenRequestServiceImpl extends PgenServiceImpl implements PgenReque
 	private void validateIt(DataProc dataProc, final DataProc validateProc, final PgenRequest pgenRequest, Operator activeUser ){
 
 		dataProc.setProcData(serializeProcData(pgenRequest, PgenRequest.class));
-		/*
+		
 		 * If an intern created a request and the manager validates his/her request, it doesn't necessarily go to CCSIT.
 		 * => DefineStatus as if a regular profile did a creation (cf. create() method)
-		 */
+		 
 		if(dataProc.getTask().getCode().equals(TaskRefConstants.PGEN_VALIDATION_RESP)){
 			//Same method called in creation
 			definePgenStatus(dataProc, pgenRequest); 
@@ -579,5 +541,5 @@ public class PgenRequestServiceImpl extends PgenServiceImpl implements PgenReque
 		return bonitaService;
 	}
 
-
+*/
 }	
